@@ -1,0 +1,36 @@
+FROM debian:bookworm AS builder
+
+ENV BIN_DIR=/tmp/bin
+
+RUN apt update && apt --no-install-recommends install -y build-essential\
+    automake \
+    build-essential devscripts debhelper-compat doxygen doxygen-latex graphviz libgtest-dev liblttng-ust-dev libyaml-dev python3-sphinx \
+    ca-certificates \
+    git \
+    gnupg \
+    libssl-dev \
+    openssh-client \
+    pkg-config \
+    software-properties-common\
+    python3-pip\
+    python3-jinja2\
+    libboost-dev \
+    libgnutls28-dev openssl libtiff-dev pybind11-dev \
+    qtbase5-dev libqt5core5a libqt5widgets5\
+    meson python3-yaml python3-ply\
+    libglib2.0-dev libgstreamer-plugins-base1.0-dev\
+    ninja-build\
+    python3-dev\
+    libdrm-dev \
+    libjpeg-dev\
+    libsdl2-dev\
+    libtiff-dev \
+    libevent-dev \
+    ccache
+
+COPY deb-source /code/deb-source
+WORKDIR /code/deb-source/libcamera-0.0.3
+#RUN mkdir -p $BIN_DIR && meson setup build --prefix=$BIN_DIR --buildtype=release -Dpipelines=rpi/vc4,rpi/pisp -Dipas=rpi/vc4,rpi/pisp -Dv4l2=true -Dgstreamer=enabled -Dtest=false -Dlc-compliance=disabled -Dcam=enabled -Dqcam=disabled -Ddocumentation=disabled -Dpycamera=enabled && ninja -C build install
+RUN debuild -b -uc -us
+FROM scratch
+COPY --from=builder /code/deb-source/*.deb /
